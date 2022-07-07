@@ -111,11 +111,11 @@ WSGI_APPLICATION = 'invoice.wsgi.application'
 DATABASES = {
 'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'invoicing',
-        'USER': 'root',
-        'PASSWORD': 'abhi1234',
-        'HOST': '127.0.0.1',
-        'PORT': '3306',
+        'NAME': 'ENTER YOUR DATABASE NAME',
+        'USER': 'USER NAME(MOST CASES ITS root)',
+        'PASSWORD': 'PASSWORD',
+        'HOST': 'HOST URL',
+        'PORT': 'PORT NUMBER',
         'OPTIONS' : {
             'sql_mode':'traditional',
         }
@@ -169,18 +169,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ############ Added Email related authentication fields###################
 
-DEFAULT_FROM_EMAIL = 'abhiqwik01@gmail.com'
+DEFAULT_FROM_EMAIL = 'THE EMAIL TO SEND MAILS WITH'
 EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
-SERVER_EMAIL ="abhiqwik01@gmail.com"
+SERVER_EMAIL ="SERVER EMAIL"
 EMAIL_HOST='smtp.gmail.com'
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
-EMAIL_HOST_USER="abhiqwik01@gmail.com"
-EMAIL_HOST_PASSWORD="knpscoebawwngjdo"
+EMAIL_HOST_USER="THE EMAIL OF THE HOST"
+EMAIL_HOST_PASSWORD="APP_PASSWORD FOR MAIL IN GOOGLE MAIL"
 
 
 ###### Celery #####
-CELERY_BROKER_URL='redis://127.0.0.1:6379'
+CELERY_BROKER_URL='CELERY BROKER URL'
 CELERY_ACCEPT_CONTENT=['application/json']
 CELERY_RESULT_SERIALIZER='json'
 CELERY_TASK_SERIALIZER='json'

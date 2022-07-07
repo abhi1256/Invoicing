@@ -19,12 +19,6 @@ app.config_from_object(settings, namespace='CELERY')  ##### Letting my app know 
 
 ####### This will set a celery beat schedule that will add a task to database whenever we start the program ########
 app.conf.beat_schedule={
-    #  'send-mail-every-day-at-8': {
-    #      'task': 'trial.tasks.rem_email',
-    #      'schedule': 15,
-    #      'args': ({"email_fr":"abhiqwik01@gmail.com","email_to":"abhiramganesh98@gmail.com",
-    #      'Rem_date_day':"1",'Rem_date_month':"1",'Rem_date_year':"2022"},)
-    # }
 }
 
 app.autodiscover_tasks() ########## Celery automatically reads tasks.py file in our folder and links them directly in

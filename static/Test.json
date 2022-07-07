@@ -1,0 +1,79 @@
+{
+  "Invoice_name": "first1",
+  "Invoice_Sub_Title": "1st_Invoice",
+  "Invoice_No": "001",
+  "Invoice_Date": "29/05/2022",
+  "Due_Date": "29/04/2022",
+  "Bussiness_Logo": "https://host.tatiblockchain.co.za/img/skolo_logo.png",
+  "Billed_By": {
+    "Business_Name": "vertigo",
+    "Address": "gandhinagar,hyderabad,Telangana--234143",
+    "Email": "garie@34gmail.com",
+    "Phone": "7893423456",
+    "Business_GSTIN": "5",
+    "Business_PAN_Number": "2",
+    "VAT_Registration_Number": "1"
+  },
+  "Billed_To": {
+    "Business_Name": "Business Name",
+    "Address": "gandhinagar,hyderabad,Telangana--234143",
+    "Email": "garie@34gmail.com",
+    "Phone": "7893423456",
+    "Unique_Key": "1647435119271",
+    "Business_GSTIN": "5",
+    "Business_PAN_Number": "2",
+    "VAT_Registration_Number": "1"
+  },
+  "Choose_Taxation": "GST",
+  "Currency": "INR",
+  "Item": [
+    {
+      "item_name": "apple1",
+      "GST Rate": "10%",
+      "Quantity": "1",
+      "Rate": "20",
+      "Amount": "2999",
+      "CGST": "21",
+      "SGST": "21",
+      "Total": "24235"
+    },
+    {
+      "item_name": "apple2",
+      "GST Rate": "10%",
+      "Quantity": "1",
+      "Rate": "20",
+      "Amount": "2999",
+      "CGST": "21",
+      "SGST": "21",
+      "Total": "24235"
+    },
+    {
+      "item_name": "apple3",
+      "GST Rate": "10%",
+      "Quantity": "1",
+      "Rate": "20",
+      "Amount": "2999",
+      "CGST": "21",
+      "SGST": "21",
+      "Total": "24235"
+    },
+    {
+      "item_name": "apple4",
+      "GST Rate": "10%",
+      "Quantity": "1",
+      "Rate": "20",
+      "Amount": "2999",
+      "CGST": "21",
+      "SGST": "21",
+      "Total": "24235"
+    }
+  ],
+  "HSN/SAC": {
+    "998311": "18%",
+    "998312": "18%"
+  },
+  "Total_In_Words": "ninety-six thousand, nine hundred and forty Rupees",
+  "Total_sum": "96940",
+  "status":1,
+  "client_id":18
+}

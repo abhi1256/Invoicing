@@ -1,0 +1,12 @@
+{% extends 'home.html' %}
+
+{% block content %}
+
+        <form action="" method="post">
+            {% csrf_token %}
+            {{form.as_p}}
+            <input href="sign_in/" type="submit">
+        </form>
+        <script src="" async defer></script>
+
+{% endblock content %}

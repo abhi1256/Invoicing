@@ -1,0 +1,14 @@
+{% extends 'home.html' %}
+
+{% block title %}OTP{% endblock title %}
+
+{% block content %}
+
+<h1>Fill up your form here.</h1>
+<form action="/OTP/" method="post">
+    {% csrf_token %}
+    <input type="hidden" id="rawtext" name="user_id" value="{{user_id}}">
+    <input type="number" name="otp" placeholder="OTP" required>
+    <input type="submit" />
+</form>
+{% endblock content %}

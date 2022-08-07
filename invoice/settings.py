@@ -79,6 +79,23 @@ AUTHENTICATION_BACKENDS = ['django.contrib.auth.backends.ModelBackend',
 
 ROOT_URLCONF = 'invoice.urls'
 
+# TEMPLATES = [
+#     {
+#         'BACKEND': 'django.template.backends.jinja2.Jinja2',
+#         'DIRS': [os.path.join(BASE_DIR, 'templates')],
+#         'APP_DIRS': True,
+#         'OPTIONS': {
+#             'environment': "invoice.jinja2.environment",
+#             'context_processors': [
+#                 'django.template.context_processors.debug',
+#                 'django.template.context_processors.request',
+#                 'django.contrib.auth.context_processors.auth',
+#                 'django.contrib.messages.context_processors.messages',
+#             ],
+#         },
+#     },
+# ]
+
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -94,6 +111,7 @@ TEMPLATES = [
         },
     },
 ]
+
 
 WSGI_APPLICATION = 'invoice.wsgi.application'
 
@@ -111,11 +129,11 @@ WSGI_APPLICATION = 'invoice.wsgi.application'
 DATABASES = {
 'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'ENTER YOUR DATABASE NAME',
-        'USER': 'USER NAME(MOST CASES ITS root)',
-        'PASSWORD': 'PASSWORD',
-        'HOST': 'HOST URL',
-        'PORT': 'PORT NUMBER',
+        'NAME': 'invoicing',
+        'USER': 'root',
+        'PASSWORD': 'abhi1234',
+        'HOST': '127.0.0.1',
+        'PORT': '3306',
         'OPTIONS' : {
             'sql_mode':'traditional',
         }
@@ -169,18 +187,18 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 ############ Added Email related authentication fields###################
 
-DEFAULT_FROM_EMAIL = 'THE EMAIL TO SEND MAILS WITH'
+DEFAULT_FROM_EMAIL = 'abhiqwik01@gmail.com'
 EMAIL_BACKEND='django.core.mail.backends.smtp.EmailBackend'
-SERVER_EMAIL ="SERVER EMAIL"
+SERVER_EMAIL ="abhiqwik01@gmail.com"
 EMAIL_HOST='smtp.gmail.com'
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
-EMAIL_HOST_USER="THE EMAIL OF THE HOST"
-EMAIL_HOST_PASSWORD="APP_PASSWORD FOR MAIL IN GOOGLE MAIL"
+EMAIL_HOST_USER="abhiqwik01@gmail.com"
+EMAIL_HOST_PASSWORD="knpscoebawwngjdo"
 
 
 ###### Celery #####
-CELERY_BROKER_URL='CELERY BROKER URL'
+CELERY_BROKER_URL='redis://127.0.0.1:6379'
 CELERY_ACCEPT_CONTENT=['application/json']
 CELERY_RESULT_SERIALIZER='json'
 CELERY_TASK_SERIALIZER='json'

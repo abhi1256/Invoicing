@@ -14,10 +14,13 @@ import http.client
 import json
 import base64
 from io import BytesIO
-from django.http import HttpResponse,JsonResponse
+from django.http import HttpResponse,JsonResponse,FileResponse
 from django.template.loader import get_template
-# from xhtml2pdf import pisa
-from .utils import * 
+from xhtml2pdf import pisa
+from .whatsapp import *
+from .pdf import *
+from .utils import *
+from .Invoice_Parser import *  
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
@@ -37,6 +40,14 @@ from datetime import datetime, tzinfo
 from django.utils import timezone
 import pytz
 from itertools import chain
+from django.db.models import Q
+from django.template.loader import render_to_string
+from django.template import loader
+import pdfkit
+import PyPDF2
+from requests_toolbelt.multipart.encoder import MultipartEncoder
+
+# from weasyprint import HTML
 
 
 class usersList(LoginRequiredMixin,APIView):
@@ -80,10 +91,23 @@ class userDetails(LoginRequiredMixin,APIView):
 class userItems(LoginRequiredMixin,APIView):
 
     login_url='/login/'
+    http_method_names = ['get', 'post', 'put', 'delete']
+
+    def dispatch(self, *args, **kwargs):
+        # print(self.request.POST,self.request)
+        method = self.request.POST.get('_method', '').lower()
+        if method == 'put':
+            return self.put(*args, **kwargs)
+        if method == 'delete':
+            return self.delete(*args, **kwargs)
+        return super(userItems, self).dispatch(*args, **kwargs)
+
     def post(self,request):
         user1=user.objects.get(user_email__iexact=request.user.email)
         item_data=item_func(request.data)
+        # print('item',item_data)
         serializer=itemsSerializer(data=item_data,many=True)
+        # print('serializer.is_valid()',serializer.is_valid())
         if serializer.is_valid():
             for i in range(len(item_data)):
                 serializer.validated_data[i]['user_id']=user1
@@ -113,16 +137,46 @@ class userItems(LoginRequiredMixin,APIView):
     def put(self,request):
         if type(request.data["item_ids"])==list:
             i=0
-            for item_id in request.data["item_ids"]:
-                try:
-                    allitem=items.objects.filter(item_id=item_id)
-                    user1=user.objects.get(user_id=request.data['user_id'])
-                except:
-                    return HttpResponse("Either Item is not found or user is not there",status=404)
-                if request.user.email==user1.user_email:
-                    item_li=item_up_func(request.data["Item"][i])
-                    allitem.update(**item_li)
-                    i+=1
+            if len(request.data["item_ids"])<=len(request.data["Item"]):
+                for item_id in request.data["item_ids"]:
+                    try:
+                        allitem=items.objects.filter(item_id=item_id)
+                        user1=user.objects.get(user_id=request.data['user_id'])
+                    except:
+                        return HttpResponse("Either Item is not found or user is not there",status=404)
+                    if request.user.email==user1.user_email:
+                        item_li=item_up_func(request.data["Item"][i])
+                        allitem.update(**item_li)
+                        i+=1
+                data={"Item":[],"user_id":request.data["user_id"]}
+                for j in range(i,len(request.data["Item"])):
+                    data['Item'].append(request.data["Item"][j])
+                if len(data['Item'])!=0:
+                    item_data=item_func(data)
+                    serializer=itemsSerializer(data=item_data,many=True)
+                    if serializer.is_valid():
+                        for i in range(len(item_data)):
+                            serializer.validated_data[i]['user_id']=user1
+                        serializer.save()
+                        return Response(serializer.data,status=status.HTTP_206_PARTIAL_CONTENT)
+                else:
+                    return HttpResponse("Item Updated!",status=status.HTTP_200_OK)
+                return HttpResponse("Item Couldn't Update!",status=status.HTTP_400_BAD_REQUEST)
+            elif len(request.data["item_ids"])>len(request.data["Item"]):
+                for i in range(len(request.data["Item"])):
+                    try:
+                        allitem=items.objects.filter(item_id=request.data["item_ids"][i])
+                        user1=user.objects.get(user_id=request.data['user_id'])
+                    except:
+                        return HttpResponse("Either Item is not found or user is not there",status=404)
+                    if request.user.email==user1.user_email:
+                        item_li=item_up_func(request.data["Item"][i])
+                        allitem.update(**item_li)
+                        # i+=1
+                for j in range(len(request.data["Item"]),len(request.data["item_ids"])):
+                    del_item=items.objects.get(item_id=request.data["item_ids"][j])
+                    del_item.delete()
+                return HttpResponse("Item Updated!",status=status.HTTP_200_OK)
         return HttpResponse("Item Updated!",status=status.HTTP_200_OK)
 
 ################# Caution this below api get is not protected i.e any user can use this to see all items of others ###########
@@ -173,6 +227,19 @@ class userClients(LoginRequiredMixin,APIView):
 
 class billed_by(LoginRequiredMixin,APIView):
     login_url='/login/'
+    http_method_names = ['get', 'post', 'put', 'delete']
+
+
+    def dispatch(self, *args, **kwargs):
+        # print(self.request.POST,self.request)
+        method = self.request.POST.get('_method', '').lower()
+        if method == 'put':
+            return self.put(*args, **kwargs)
+        if method == 'delete':
+            return self.delete(*args, **kwargs)
+        return super(billed_by, self).dispatch(*args, **kwargs)
+
+
     def get(self,request):
         user1=user.objects.get(user_email__iexact=request.user.email)
         invoices=Invoice.objects.filter(user_id=user1.user_id)
@@ -185,8 +252,11 @@ class billed_by(LoginRequiredMixin,APIView):
         return Response(serializer.data)
     
     def post(self,request):
+        # print(request.data,'bill_by')
         bi_data=Billed_By_func(request.data)
         serializer=Billed_BySerializer(data=bi_data)
+        # print('ser',serializer)
+        # print("ser_ver",serializer.is_valid())
         if serializer.is_valid():
             serializer.save()
             
@@ -202,6 +272,7 @@ class billed_by(LoginRequiredMixin,APIView):
     #     return HttpResponse("Billed_To Deleted!",status=status.HTTP_204_NO_CONTENT)
 
     def put(self,request):
+        # print(request.data,'hi bil_by')
         try:
             bil_by=Billed_By.objects.filter(Billed_By_id=request.data["bil_by_id"])
             user1=user.objects.get(user_id=request.data["user_id"])
@@ -215,6 +286,19 @@ class billed_by(LoginRequiredMixin,APIView):
 
 class billed_to(LoginRequiredMixin,APIView):
     login_url='/login/'
+    http_method_names = ['get', 'post', 'put', 'delete']
+
+
+    def dispatch(self, *args, **kwargs):
+        # print(self.request.POST,self.request)
+        method = self.request.POST.get('_method', '').lower()
+        if method == 'put':
+            return self.put(*args, **kwargs)
+        if method == 'delete':
+            return self.delete(*args, **kwargs)
+        return super(billed_to, self).dispatch(*args, **kwargs)
+
+
     def get(self,request):
         user1=user.objects.get(user_email__iexact=request.user.email)
         invoices=Invoice.objects.filter(user_id=user1.user_id)
@@ -291,13 +375,24 @@ class User_invoiceList(LoginRequiredMixin,APIView):
                     serializer1=itemsSerializer(item1,many=True)
                     serializer.data[i]['Invoiceitems'][j]=serializer1.data[0]
                     serializer.data[i]['Invoiceitems'][j].pop('user_id')
-            return Response(serializer.data)
+            return Response(serializer.data,status=status.HTTP_200_OK)
         return HttpResponse("User Not Verified",status=status.HTTP_401_UNAUTHORIZED)
         
 ############################# Invoice API added by Abhiram #############################################    
 
 class userInvoices(LoginRequiredMixin,APIView):
     login_url='/login/'
+    http_method_names = ['get', 'post', 'put', 'delete']
+
+    def dispatch(self, *args, **kwargs):
+        # print(self.request.POST,self.request)
+        method = self.request.POST.get('_method', '').lower()
+        if method == 'put':
+            return self.put(*args, **kwargs)
+        if method == 'delete':
+            return self.delete(*args, **kwargs)
+        return super(userInvoices, self).dispatch(*args, **kwargs)
+
     def post(self,request):
         in_data=invoice_func(request.data)
         serializer=invoiceSerializer(data=in_data)
@@ -308,6 +403,7 @@ class userInvoices(LoginRequiredMixin,APIView):
             return Response(serializer.data,status=status.HTTP_201_CREATED)
 
     def get(self,request):
+        # print(request.data)
         auth=User.objects.get(email__iexact=request.user.email)
         user_id=user.objects.get(auth_id=auth)
         #pk=request.data["user_id"]
@@ -344,35 +440,46 @@ class userInvoices(LoginRequiredMixin,APIView):
                 serializer.data[i]['Invoice_Billed_To'].pop('user_id')
                 serializer.data[i].pop('user_id')
                 #serializer.data[i].pop('client_id')
-                for j in range(len(serializer.data[0]['Invoiceitems'])):
+                # print(serializer.data[i]['Invoiceitems'])
+                for j in range(len(serializer.data[i]['Invoiceitems'])):
+                    
                     item1=items.objects.filter(item_id=serializer.data[i]['Invoiceitems'][j])
                     serializer1=itemsSerializer(item1,many=True)
                     serializer.data[i]['Invoiceitems'][j]=serializer1.data[0]
                     serializer.data[i]['Invoiceitems'][j].pop('user_id')
-            return Response(serializer.data)
+                    # print(serializer.data[i]['Invoiceitems'])
+            # return Response(serializer.data)
+            res=json.dumps(serializer.data)
+            res=json.loads(res)
+            return render(request,"invoices.html",context={'data':res})
         return HttpResponse("User Not Verified",status=status.HTTP_401_UNAUTHORIZED)
  
     def delete(self,request):
+        inv_id=request.POST.dict()['invoice_id']
+        # inv_id=request.data
         try:
-            invoice1=Invoice.objects.get(invoice_id=request.data["invoice_id"])
-            invoice2=Invoice.objects.filter(invoice_id=request.data["invoice_id"])
-            user_=user.objects.filter(user_id=invoice2[0].user_id)
+            invoice1=Invoice.objects.get(invoice_id=inv_id)
+            invoice2=Invoice.objects.filter(invoice_id=inv_id)
+            # print(invoice2.values()[0]['user_id_id'])
+            # print(invoice2[0].user_id_id)
+            user_=user.objects.filter(user_id=invoice2[0].user_id_id)
             if len(user_)==0:
                 return HttpResponse("No such invoice found",status=status.HTTP_404_NOT_FOUND)
             bil_by=invoice2[0].Invoice_Billed_By
             bil_to=invoice2[0].Invoice_Billed_To
             items=invoice2[0].Invoiceitems.all()
-        except:
-            return HttpResponse(status=404)
-        print(invoice1,bil_by,bil_to,items)
+        except exceptions as e:
+            return f'e'
+        # print(invoice1,bil_by,bil_to,items)
         bil_by.delete()
         bil_to.delete()
         for item in items:
             item.delete()
         invoice1.delete()
-        return HttpResponse("Client Deleted!",status=status.HTTP_204_NO_CONTENT)
+        return redirect("http://127.0.0.1:8000/users/invoices/")
 
     def put(self,request):
+        # print(request.data)
         try:
             inv=Invoice.objects.filter(invoice_id=request.data["invoice_id"])
             user1=user.objects.get(user_id=request.data["user_id"])
@@ -381,6 +488,9 @@ class userInvoices(LoginRequiredMixin,APIView):
         if request.user.email==user1.user_email:
             inv_li=inv_up_func(request.data)
             inv.update(**inv_li)
+            if request.data["items"][0]!=0:
+                for item in request.data["items"]:
+                    inv[0].Invoiceitems.add(item)
         return HttpResponse("Item Updated!",status=status.HTTP_200_OK)
 
 
@@ -401,7 +511,7 @@ def start(request):
 
 def home(request,msg):
     print(msg)
-    context={"data":msg}
+    context={"msg":msg}
     return render(request,"home.html",context)
 
 class index(LoginRequiredMixin,APIView):
@@ -492,14 +602,14 @@ from django.template.loader import get_template
 from django.views import View
 # from xhtml2pdf import pisa
 
-def render_to_pdf(template_src, context_dict={}):
-	template = get_template(template_src)
-	html  = template.render(context_dict)
-	result = BytesIO()
-	pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
-	if not pdf.err:
-		return HttpResponse(result.getvalue(), content_type='application/pdf')
-	return None
+# def render_to_pdf(template_src, context_dict={}):
+# 	template = get_template(template_src)
+# 	html  = template.render(context_dict)
+# 	result = BytesIO()
+# 	pdf = pisa.pisaDocument(BytesIO(html.encode("ISO-8859-1")), result)
+# 	if not pdf.err:
+# 		return HttpResponse(result.getvalue(), content_type='application/pdf')
+# 	return None
 
 
 data = {
@@ -538,12 +648,109 @@ class DownloadPDF(View):
 
 ##################################### Code by Abhiram ################################################################
 
+class open_inv(LoginRequiredMixin,APIView):
+    login_url='/login/'
+    def get(self,request):
+        edit=int(request.GET.dict()["Open/edit"])
+        print(edit)
+        if edit==0:
+            return render(request,"invoice_receipt.html",context={"edit":0})
+        else:
+            # inv_id=request.GET.dict()["invoice_id"]
+            API_ENDPOINT="http://127.0.0.1:8000/userinvoicelist/"
+            try:
+                header = {
+                'X-CSRFToken':request.GET.dict()['csrfmiddlewaretoken'],
+                'Content-Type': 'application/json',
+                'Cookie': request.headers["Cookie"]
+                }
+                r=requests.get(url = API_ENDPOINT,data=json.dumps(request.GET.dict()),headers=header)
+                data=json.loads(r.content.decode('UTF-8'))
+                data[0]['item_count']=len(data[0]['Invoiceitems'])
+                line=Html_parser(data[0]['Invoiceitems'])
+                # print(data)
+                # print(data)
+            except exceptions as e:
+                print(f"Invoice Getting Exception:{e}")
+                return HttpResponse("Failed!!",status=status.HTTP_400_BAD_REQUEST)
+        return render(request,"invoice_receipt.html",context={"invoice":data[0],"html":line,"edit":1})
+
+    def post(self,request):
+        res=info_parser(request.data.dict())
+        json_data=json.dumps(res)
+        header = {
+        'X-CSRFToken':res['csrfmiddlewaretoken'],
+        'Content-Type': 'application/json',
+        'Cookie': request.headers["Cookie"]
+        }
+        # print(res['edit'])
+        if int(res['edit'])==0:
+            # print('hi')
+            # print(res)
+            API_ENDPOINT="http://127.0.0.1:8000/comp_invoice/"
+            try:
+                r=requests.post(url = API_ENDPOINT,data=json_data,headers=header)
+            except exceptions as e:
+                print(f"Invoice Posting Exception:{e}")
+                return HttpResponse("Failed!!",status=status.HTTP_400_BAD_REQUEST)
+        else:
+            API_ENDPOINT="http://127.0.0.1:8000/comp_invoice/"
+            try:
+                r=requests.request("PUT",url = API_ENDPOINT,data=json_data,headers=header)
+            except exceptions as e:
+                print(f"Invoice Posting Exception:{e}")
+                return HttpResponse("Failed!!",status=status.HTTP_400_BAD_REQUEST)
+        return redirect("http://127.0.0.1:8000/users/invoices/")
 
 
+class PDF(LoginRequiredMixin,APIView):
+    login_url='/login/'
+    def post(self,request):
+        # print('hi')
+        if type(request.data)!=dict:
+            rem=0
+            data=request.data.dict()
+        else:
+            rem=1
+            data=request.data
+        # print(data)
+        API_ENDPOINT="http://127.0.0.1:8000/userinvoicelist/"
+        try:
+            header = {
+            'X-CSRFToken':data['csrfmiddlewaretoken'],
+            'Content-Type': 'application/json',
+            'Cookie': request.headers["Cookie"]
+            }
+            r=requests.get(url = API_ENDPOINT,data=json.dumps(data),headers=header)
+            data=json.loads(r.content.decode('UTF-8'))
+        except exceptions as e:
+            print(f"Invoice Posting Exception:{e}")
+            return HttpResponse("Failed!!",status=status.HTTP_400_BAD_REQUEST)
+        config = pdfkit.configuration(wkhtmltopdf = r"C:\\Program Files\\wkhtmltopdf\\bin\\wkhtmltopdf.exe")
+        template = get_template('Edit_Invoice.html')
+        html = template.render({'inv': data[0]})
+        if rem==0:
+            options = {
+            'encoding': "UTF-8",
+            }
+            pdf = pdfkit.from_string(html, False, options,configuration = config)
+            # with open('readme.pdf', 'wb+') as f:
+            #     f.write(pdf)
+            # print(f)
+            # f.close()
+            # os.remove('readme.pdf')
+            print('hi')
+            response = HttpResponse(pdf, content_type='application/pdf')
+            filename=f'{data[0]["invoice_title"]}.pdf'
+            response['Content-Disposition'] = f'attachment; filename={filename}'
+            return response
+        else:
+            return HttpResponse(html, content_type="text/plain")
 #################### SEND EMAILS API ########################
 ##################### This api sends mails to any number of people at the same time with attachments #################
 
 class Send_Email(LoginRequiredMixin,APIView):
+    login_url='/login/'
     def post(self,request):
         json_data = request.data
         connection = mail.get_connection()   # Use default email connection
@@ -556,18 +763,37 @@ class Send_Email(LoginRequiredMixin,APIView):
 
 class Comp_Invoice(LoginRequiredMixin,APIView):
     login_url='/login/'
+    http_method_names = ['get', 'post', 'put', 'delete']
+
+    def dispatch(self, *args, **kwargs):
+        # print("fsad")
+        method = self.request.POST.get('_method', '').lower()
+        # print(self.request,self.request.POST)
+        if method == 'put':
+            # print('hfaiofhew')
+            return self.put(*args, **kwargs)
+        if method == 'delete':
+            return self.delete(*args, **kwargs)
+        return super(Comp_Invoice, self).dispatch(*args, **kwargs)
+
+
     def post(self,request):
         user1=user.objects.get(user_email__iexact=request.user.email)
-        #print("hio")
+        # print(request.data,'hi',type(request.data))
         request.data.update({"user_id":user1.user_id})
+        # print(request.data)
         head=request.headers
+        # print(head)
         ################ Calling the Billed_BY API #####################
 
         try:
             API_ENDPOINT = "http://127.0.0.1:8000/billed_by/"
-            r = requests.post(url = API_ENDPOINT, json=request.data,headers=head)
+            r = requests.post(url = API_ENDPOINT, data=json.dumps(request.data),headers=head)
+            # print(r)
             data=json.loads(r.content.decode('UTF-8'))
+            # print(data)
             request.data.update({"bil_by_id":data["Billed_By_id"]})
+            # print('bil_by')
         except exceptions as e:
             print(f"Billed_By exception:{e}")
             return HttpResponse("Failed!!",status=status.HTTP_400_BAD_REQUEST)
@@ -576,7 +802,7 @@ class Comp_Invoice(LoginRequiredMixin,APIView):
 
         try:
             API_ENDPOINT = "http://127.0.0.1:8000/billed_to/"
-            r = requests.post(url = API_ENDPOINT,json=request.data,headers=head)
+            r = requests.post(url = API_ENDPOINT,data=json.dumps(request.data),headers=head)
             data=json.loads(r.content.decode('UTF-8'))
             request.data.update({"bil_to_id":data["Billed_To_id"]})
         except exceptions as e:
@@ -588,9 +814,10 @@ class Comp_Invoice(LoginRequiredMixin,APIView):
         try:
             #user1=user.objects.get(user_email=request.user.email)
             API_ENDPOINT = "http://127.0.0.1:8000/users/items/"
-            r = requests.post(url = API_ENDPOINT, json=request.data,headers=head)
+            r = requests.post(url = API_ENDPOINT, data=json.dumps(request.data),headers=head)
             data=json.loads(r.content.decode('UTF-8'))
-            request.data.update({"items":[data[0]['item_id'],data[1]['item_id'],data[2]['item_id'],data[3]['item_id']]})
+            print(data)
+            request.data.update({"items":[x['item_id'] for x in data]})
             #request.data.update({"items":data})
         except exceptions as e:
             print(f"items exception:{e}")
@@ -600,16 +827,21 @@ class Comp_Invoice(LoginRequiredMixin,APIView):
 
         try:
             API_ENDPOINT = "http://127.0.0.1:8000/users/invoices/"
-            r = requests.post(url = API_ENDPOINT, json=request.data,headers=head)
+            r = requests.post(url = API_ENDPOINT, data=json.dumps(request.data),headers=head)
         except exceptions as e:
             print(f"Invoice exception:{e}")
             return HttpResponse("Failed!!",status=status.HTTP_400_BAD_REQUEST)
         return HttpResponse("Success!!",status=status.HTTP_200_OK)
 
     def put(self,request):
+        # print('hi')
+        # print(request.data)
         user1=user.objects.filter(user_email__iexact=request.user.email)
         invoice_id=request.data["invoice_id"]
-        invoice=Invoice.objects.filter(invoice_id=invoice_id) | Invoice.objects.filter(user_id=user1[0].user_id)
+        # print(invoice_id)
+        criterion1 = Q(invoice_id=invoice_id)
+        criterion2 = Q(user_id=user1[0].user_id)
+        invoice=Invoice.objects.filter(criterion1 & criterion2)
         bil_by_id=invoice[0].Invoice_Billed_By.Billed_By_id
         bil_to_id=invoice[0].Invoice_Billed_To.Billed_To_id
         item_ids=[x.item_id for x in invoice[0].Invoiceitems.all()]
@@ -645,8 +877,12 @@ class Comp_Invoice(LoginRequiredMixin,APIView):
                 #user1=user.objects.get(user_email=request.user.email)
                 API_ENDPOINT = "http://127.0.0.1:8000/users/items/"
                 r = requests.put(url = API_ENDPOINT, json=request.data,headers=head)
-                # data=json.loads(r.content.decode('UTF-8'))
-                # request.data.update({"items":[data[0]['item_id'],data[1]['item_id'],data[2]['item_id'],data[3]['item_id']]})
+                if r.status_code==206:
+                    data=json.loads(r.content.decode('UTF-8'))
+                    # print(data)
+                    request.data.update({"items":[x['item_id'] for x in data]})
+                else:
+                    request.data.update({"items":[0]})
             except exceptions as e:
                 print(f"items exception:{e}")
                 return HttpResponse("Failed!!",status=status.HTTP_400_BAD_REQUEST)
@@ -666,21 +902,127 @@ class Comp_Invoice(LoginRequiredMixin,APIView):
 #################### Remainder Emails API ########################
 
 class rem_emails(LoginRequiredMixin,APIView):
+    login_url='/login/'
+    def get(self,request):
+        inv_id=request.GET.dict()["invoice_id"]
+        ind=request.headers['Cookie'].find("csrftoken=")
+        fin=request.headers['Cookie'][ind+10:].find(";")
+        fin+=ind+10
+        csrfmiddlewaretoken=request.headers['Cookie'][ind+10:fin]
+        data=request.GET.dict().copy()
+        data['csrfmiddlewaretoken']=csrfmiddlewaretoken
+        try:
+            header = {
+            'X-CSRFToken':csrfmiddlewaretoken,
+            'Content-Type': 'application/json',
+            'Cookie': request.headers["Cookie"]
+            }
+            API_ENDPOINT="http://127.0.0.1:8000/Print/"
+            r=requests.post(url = API_ENDPOINT,data=json.dumps(data),headers=header)
+        except exceptions as e:
+            print(f"Invoice Posting Exception:{e}")
+            return HttpResponse("Failed!!",status=status.HTTP_400_BAD_REQUEST)
+        html=r.content.decode('UTF-8')
+        names=[]
+        for task in PeriodicTask.objects.all():
+            if task.enabled:
+                names.append(task.name)
+            else:
+                task_obj=PeriodicTask.objects.get(name__iexact=task.name)
+                task_obj.delete()
+        return render(request,"rem-email.html",context={'inv_id':inv_id,"names":names,"email_pdf":html})
+        # return render(request,"temp.html")
     def post(self,request):
-        json_data = request.data
+        json_data = request.data.dict()
         schedule, created = CrontabSchedule.objects.get_or_create(     # Creating a Cron object in the database under
             day_of_month=json_data['day'],                    # Crontabs.Crontabs describe the tasks datetime
             month_of_year=json_data['month'],                  # schedule
-            day_of_week=json_data['days_to_repeat'],
+            day_of_week='*',
             hour = json_data['hour'],
             minute = json_data['minute'])
+            
         task = PeriodicTask.objects.create(                        # Adding a periodic object in the database under 
             crontab=schedule,                                      # Periodic_Tasks.Periodic tasks describe the task
-            name="schedule_mail_task_"+"10",                        # details of when to perform,whether task is done or not etc;
+            name=json_data["task_name"],                        # details of when to perform,whether task is done or not etc;
             task='trial.tasks.rem_email',
             args = json.dumps([json_data]),
-            one_off=True)
+            one_off=False)
         return HttpResponse("Emails Sent!!",status=status.HTTP_200_OK)
+
+class whatsapp_api(LoginRequiredMixin,APIView):
+    login_url='/login/'
+
+    http_method_names = ['get', 'post', 'put', 'delete']
+    def dispatch(self, *args, **kwargs):
+        if self.request.method=='POST':
+            return self.post(*args, **kwargs)
+        method = self.request.POST.get('_method', '').lower()
+        if method == 'put':
+            return self.put(*args, **kwargs)
+        if method == 'delete':
+            return self.delete(*args, **kwargs)
+        return super(whatsapp_api, self).dispatch(*args, **kwargs)
+
+    def get(self,request):
+        inv_id=request.GET.dict()["invoice_id"]
+        ind=request.headers['Cookie'].find("csrftoken=")
+        fin=request.headers['Cookie'][ind+10:].find(";")
+        fin+=ind+10
+        csrfmiddlewaretoken=request.headers['Cookie'][ind+10:fin]
+        data=request.GET.dict().copy()
+        data['csrfmiddlewaretoken']=csrfmiddlewaretoken
+        try:
+            header = {
+            'X-CSRFToken':csrfmiddlewaretoken,
+            'Content-Type': 'application/json',
+            'Cookie': request.headers["Cookie"]
+            }
+            API_ENDPOINT="http://127.0.0.1:8000/Print/"
+            r=requests.post(url = API_ENDPOINT,data=json.dumps(data),headers=header)
+        except exceptions as e:
+            print(f"Invoice Posting Exception:{e}")
+            return HttpResponse("Failed!!",status=status.HTTP_400_BAD_REQUEST)
+        html=r.content.decode('UTF-8')
+        # print(html)
+        names=[]
+        for task in PeriodicTask.objects.all():
+            if task.enabled:
+                names.append(task.name)
+            else:
+                task_obj=PeriodicTask.objects.get(name__iexact=task.name)
+                task_obj.delete()
+        return render(request,"rem_whatsapp.html",context={'inv_id':inv_id,"names":names,"whatsapp_pdf":html})
+        a=final_call()
+        if a==1:
+            return HttpResponse("Msg Sent Succesfully",status=status.HTTP_200_OK)
+        return HttpResponse("Msg Not Sent",status=status.HTTP_400_BAD_REQUEST)
+
+    def post(self,request):
+        json_data = request.POST.dict()
+        schedule, created = CrontabSchedule.objects.get_or_create(     # Creating a Cron object in the database under
+            day_of_month=json_data['day'],                    # Crontabs.Crontabs describe the tasks datetime
+            month_of_year=json_data['month'],                  # schedule
+            day_of_week='*',
+            hour = json_data['hour'],
+            minute = json_data['minute'])
+            
+        task = PeriodicTask.objects.create(                        # Adding a periodic object in the database under 
+            crontab=schedule,                                      # Periodic_Tasks.Periodic tasks describe the task
+            name=json_data["task_name"],                        # details of when to perform,whether task is done or not etc;
+            task='trial.tasks.rem_whatsapp',
+            args = json.dumps([json_data]),
+            one_off=False)
+        return HttpResponse("Msg Sent!!",status=status.HTTP_200_OK)
+
+        print('hi this is post')
+        # print(request.data)
+        print(request.POST)
+        print(request.FILES,"file")
+        print(request.headers)
+        # print(request.data,"data")
+        # print(request.FILES,"file")
+        # print(request.FILES)
+        return 123
 
 ################### User Login API ####################################
 

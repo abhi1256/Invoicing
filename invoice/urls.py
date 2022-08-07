@@ -29,5 +29,8 @@ urlpatterns = [
     path('logout/',views.log_out.as_view()),
     path('auth/',views.auth.as_view()),
     path('forgot/',views.Forgot_pass.as_view()),
-    path('OTP/',views.OTP_ver.as_view())
+    path('OTP/',views.OTP_ver.as_view()),
+    path('Open_Invoice/',views.open_inv.as_view()),
+    path('Print/',views.PDF.as_view()),
+    path('whatsapp_api/',views.whatsapp_api.as_view())
 ]

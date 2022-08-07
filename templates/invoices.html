@@ -1,0 +1,77 @@
+{% extends 'home.html' %}
+
+{% block title %}Invoices{% endblock title %}
+
+{% block content %}
+<form action="http://127.0.0.1:8000/Open_Invoice/" method="get" id="open_form_id">
+  {% csrf_token %}
+  <input type="hidden" name="Open/edit" value="0">
+  <button class="btn btn-primary"><h1>Create New Invoice</h1></button>
+</form>
+    <h1>Invoice Items</h1>
+    <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Unique_ID</th>
+              <th>NAME</th>
+              <th>CREATED DATE</th>
+              <th>DUE DATE</th>
+              <th>BILLER_NAME</th>
+              <th>CLIENT_NAME</th>
+              <th>AMOUNT</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for invoice in data %}
+            <tr>
+                <td>{{invoice.invoice_id}}</td>
+                <td>{{invoice.invoice_title}}</td>
+                <td>{{invoice.Invoice_Date}}</td>
+                <td>{{invoice.Due_Date}}</td>
+                <td>{{invoice.Invoice_Billed_By.Business_Name}}</td>
+                <td>{{invoice.Invoice_Billed_To.Business_Name}}</td>
+                <td>{{invoice.Invoice_Total}}</td>
+                <form action="http://127.0.0.1:8000/Open_Invoice/" method="get" id="edit_form_id">
+                  {% csrf_token %}
+                  <input type="hidden" name="Open/edit" value="1">
+                  <td> <button class="btn btn-primary" name="invoice_id" type="submit" id="edit_id" value="{{invoice.invoice_id}}">Edit</button></td>
+                </form>
+                <form action="http://127.0.0.1:8000/users/invoices/" method="post" id="del_form_id" onSubmit="return del_func()">
+                    {% csrf_token %}
+                    <input type="hidden" name="_method" value="delete">
+                    <td> <button class="btn btn-danger" name="invoice_id" type="submit" id="del_id" value="{{invoice.invoice_id}}">Delete</button></td>
+                </form>
+                <form action="http://127.0.0.1:8000/Rem/" method="get" id="rem_form_id">
+                  {% csrf_token %}
+                  <td> <button class="btn btn-primary" name="invoice_id" type="submit" id="rem_id" value="{{invoice.invoice_id}}">Remainder Email</button></td>
+                </form>
+                <form action="http://127.0.0.1:8000/whatsapp_api/" method="get" id="what_form_id">
+                  {% csrf_token %}
+                  <td> <button class="btn btn-primary" name="invoice_id" type="submit" id="what_id" value="{{invoice.invoice_id}}">Whatsapp Remainder</button></td>
+                </form>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      <script>
+        function del_func() {
+            var form=document.getElementById("del_form_id");
+            let del = prompt("Note!! Once deleted can't be recovered. For confirmation enter DELETE", "Enter Input Here");
+            if (del == "DELETE") {
+                return true;
+            }
+            else if (del == null) {
+                // alert("Cancelled");
+                return false;
+            }
+            else{
+              alert("Wrong Input");
+              return false;
+            }
+        }
+    </script>
+
+<script src="" async defer></script>
+{% endblock content %}

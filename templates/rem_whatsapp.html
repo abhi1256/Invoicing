@@ -1,0 +1,37 @@
+{% extends 'home.html' %}
+
+{% block title %}Remainder Email{% endblock title %}
+
+{% block content %}
+
+<h1>Fill up your form here.</h1>
+<form action="" id="rem_what" method="post">
+    {% csrf_token %}
+    <input type="hidden" name="invoice_id"  value="{{inv_id}}" required><br>
+    <input type="hidden" name="whatsapp_pdf"  value="{{whatsapp_pdf}}" required><br>
+    <input type="number" name="number_to" placeholder ="Receiver's Phone Number(Must have Whatsapp)" required><br>
+    <input type="text" name="task_name" placeholder ="Remainder Name" value="" required><br>
+    <input type="number" name="day" placeholder ="Day" required><br>
+    <input type="number" name="month" placeholder ="Month" required><br>
+    <input type="number" name="year" placeholder ="Year" required><br>
+    <input type="number" name="hour" placeholder ="Hour" required><br>
+    <input type="number" name="minute" placeholder ="Minute" required><br>
+    <button type="submit" onclick='return name_check("{{names}}")'>button</button>
+</form>
+
+
+<script>
+    function name_check(names){
+        var name=document.getElementsByName("task_name");
+        name=name[0].value;
+        name="'"+name+"'"
+        // console.log(name)
+        // console.log(names)
+        if (names.includes(name)){
+            alert('The name taken already')
+            return false;
+        };
+        return 1;
+    }
+</script>
+{% endblock content %}

@@ -1,0 +1,126 @@
+<html>
+  <body>
+
+    <div class="container">
+      <h1>{{invoice_title}}</h1>
+      <h3>{{invoice_subtitle}}</h3>
+      <!--<h4>{{Billed_By.Business_Name}}</h4>-->
+      <td>
+      Invoice #: <strong>{{invoice_id}}</strong><br />
+      Created: {{Invoice_Date}}<br />
+      Due: {{Due_Date}}
+      </td>
+      <br>
+      <hr>
+      <br>
+      <br>
+
+      <div class="table-responsive">
+        <table class="table">
+          <tbody>
+            <tr>
+              <!-- <td><img src={{Bussiness_Logo}} style="width: 100%; max-width: 100px" /></td> -->
+              <td></td>
+              <td></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+
+
+      <br>
+
+
+      <div class="table-responsive">
+        <table class="table">
+          <tbody>
+            <tr>
+              <td>
+                <h3>Billed By: </h3>
+                <strong>{{Invoice_Billed_By_id}}</strong> <br />
+                {{Invoice_Billed_By.Address}}<br />
+                {{Invoice_Billed_By.Email}} <br/>
+                {{Invoice_Billed_By.Phone}} <br/>
+                {{Invoice_Billed_By.Business_GSTIN}}<br/>
+                {{Invoice_Billed_By.Business_PAN_Number}}<br/>
+                {{Invoice_Billed_By.VAT_Registration_Number}}
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+                
+              </td>
+
+              <td>
+                <h3>Billed To</h3>
+                <strong>{{Invoice_Billed_To.Business_Name}}</strong> <br />
+                {{Invoice_Billed_To.Address}}<br />
+                {{Invoice_Billed_To.Email}} <br/>
+                {{Invoice_Billed_To.Phone}} <br/>
+                {{Invoice_Billed_To.Business_GSTIN}}<br/>
+                {{Invoice_Billed_To.Business_PAN_Number}}<br/>
+                {{Invoice_Billed_To.VAT_Registration_Number}}
+                <br>
+                <br>
+                <br>
+                <br>
+                <br>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+
+      <br>
+      <br>
+      <h1>Invoice Items</h1>
+      <br>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Quantity</th>
+              <th>Rate</th>
+              <th>Amount</th>
+              <th>CGST</th>
+              <th>SGST</th>
+              <th>Sub-Total</th>
+            </tr>
+          </thead>
+
+
+          <tbody>
+            {% for product in Invoiceitems %}
+            <tr>
+              <td>{{product.item_title}}</td>
+              <td>{{product.Quantity}}</td>
+              <td>{{product.Rate}}</td>
+              <td>{{product.Amount}}</td>
+              <td>{{product.CGST}}</td>
+              <td>{{product.SGST}}</td>
+    		  <td>{{product.Total}}</td>
+            </tr>
+            {% endfor %}
+            <tr>
+              <td></td>
+              <td></td>
+              <td> <strong> Total: {{Invoice_amount}}
+              </strong>
+              <strong> Total_In_Words: 
+                <li>{{Amount_inwords}}</li>
+              </strong>
+             </td>
+            </tr>
+          </tbody>
+
+        </table>
+      </div>
+      <br>
+      <br>
+    </div>
+  </body>
+</html>

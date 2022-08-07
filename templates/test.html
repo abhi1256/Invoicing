@@ -1,0 +1,26 @@
+<div class='row item' id='row_"+new_count+"'>
+        <div class='col-xs-2 desc'><input type='text' id='name_"+new_count+"' name='item_name_"+new_count+"'
+                        placeholder='Name' onkeyup='updateTotal(this.id)'
+                        value='{{invoice.Invoiceitems."+item_count+.item_title"}}' required><br></div>
+        <div class='col-xs-1 desc'><input type='number' id='Q_"+new_count+"' name='Quantity_"+new_count+"'
+                        placeholder='Quantity' onkeyup='updateTotal(this.id)'
+                        value='{{invoice.Invoiceitems."+item_count+.Quantity"}}' required><br></div>
+        <div class='col-xs-2 desc'><input type='number' id='R_"+new_count+"' name='Rate_"+new_count+"'
+                        placeholder='Price' onkeyup='updateTotal(this.id)'
+                        value='{{invoice.Invoiceitems."+item_count+.Rate"}}' required><br></div>
+        <div class='col-xs-2 desc'><input type='number' id='G_"+new_count+"' name='GST_Rate_"+new_count+"'
+                        placeholder='GST_Rate' onkeyup='updateTotal(this.id)'
+                        value='{{invoice.Invoiceitems."+item_count+.item_GST_Rate"}}' required><br></div>
+        <div class='col-xs-2 desc'><input type='number' id='C_"+new_count+"' name='CGST_"+new_count+"'
+                        placeholder='CGST' onkeyup='updateTotal(this.id)'
+                        value='{{invoice.Invoiceitems."+item_count+.CGST"}}' readonly><br></div>
+        <div class='col-xs-2 qty'><input type='number' id='S_"+new_count+"' name='SGST_"+new_count+"' placeholder='SGST'
+                        onkeyup='updateTotal(this.id)' value='{{invoice.Invoiceitems."+item_count+.SGST"}}'
+                        readonly><br></div>
+        <div class='col-xs-1 amount text-right'><input type='number' id='T_"+new_count+"' name='Total_"+new_count+"'
+                        placeholder='Total Amount' value='{{invoice.Invoiceitems."+item_count+.Total"}}' readonly><br>
+        </div>
+</div>
+
+
+var new_input="<div class='row item' id='row_"+new_count+"'><div class='col-xs-2 desc'><input type='text' id='name_"+new_count+"' name='item_name_"+new_count+"'placeholder='Name' onkeyup='updateTotal(this.id)' value='{{invoice.Invoiceitems."+item_count+".item_title}}' required><br></div><div class='col-xs-1 desc'><input type='number' id='Q_"+new_count+"' name='Quantity_"+new_count+"'placeholder='Quantity' onkeyup='updateTotal(this.id)' value='{{invoice.Invoiceitems."+item_count+".Quantity}}' required><br></div><div class='col-xs-2 desc'><input type='number' id='R_"+new_count+"' name='Rate_"+new_count+"'placeholder='Price' onkeyup='updateTotal(this.id)' value='{{invoice.Invoiceitems."+item_count+".Rate}}' required><br></div><div class='col-xs-2 desc'><input type='number' id='G_"+new_count+"' name='GST_Rate_"+new_count+"'placeholder='GST_Rate' onkeyup='updateTotal(this.id)' value='{{invoice.Invoiceitems."+item_count+".item_GST_Rate}}' required><br></div><div class='col-xs-2 desc'><input type='number' id='C_"+new_count+"' name='CGST_"+new_count+"'placeholder='CGST' onkeyup='updateTotal(this.id)' value='{{invoice.Invoiceitems."+item_count+".CGST}}' readonly><br></div><div class='col-xs-2 qty'><input type='number' id='S_"+new_count+"' name='SGST_"+new_count+"' placeholder='SGST'onkeyup='updateTotal(this.id)' value='{{invoice.Invoiceitems."+item_count+".SGST}}' readonly><br></div><div class='col-xs-1 amount text-right'><input type='number' id='T_"+new_count+"' name='Total_"+new_count+"'placeholder='Total Amount' value='{{invoice.Invoiceitems."+item_count+".Total}}' readonly><br></div></div>"

@@ -6,34 +6,51 @@ import random as r
 from django.core.mail import send_mail
 from django.conf.global_settings import DEFAULT_FROM_EMAIL
  
+def info_parser():
+    data={'csrfmiddlewaretoken': 'K4i5dWTmvIFN8V6vscn1tCEP6YcnIMJvVmf9DoLxNPxeKOf9vEPrNZQs4wXj93ii', 'invoice_title': 'hi', 'invoice_subtitle': 'hi2', 'Invoice_Date': '2022-07-14', 'Due_Date': '2022-07-14', 'Business_Name': 'Training & Placement Cell, NIT Agartala', 'Bil_by_street': 'lalithanagar near lalitha temple', 'Bil_by_city': 'Visakhapatnam, Andhra Pradesh, India', 'Bil_by_country': 'India', 'Bil_by_pincode': '530016', 'Email': 'abhiramganesh98@gmail.com', 'Phone': '09573571256', 'Bil_to_street': 'lalithanagar near lalitha temple', 'Bil_to_city': 'Visakhapatnam, Andhra Pradesh, India', 'Bil_to_country': 'India', 'Bil_to_pincode': '530016', 'item_name': 'ads', 'Quantity': '2', 'Rate': '12', 'GST_Rate': '10', 'CGST': '1.2000000000000002', 'SGST': '1.2000000000000002', 'Total': '26.4', 'Sub_Total_sum': '1458.6', 'Shipping_sum': '123', 'Discount_sum': '22', 'Total_sum': '1929.552'} 
+    print(data)
+
+
+
+
+
 def invoice_func(Data):
     Invoice_list={
         "user_id": Data["user_id"],
         # "client_id": Data["client_id"],
-        "invoice_title": Data["Invoice_name"],
-        "invoice_subtitle": Data["Invoice_Sub_Title"],
+        "invoice_title": Data["invoice_title"],
+        "invoice_subtitle": Data["invoice_subtitle"],
         "Invoice_Date": Data["Invoice_Date"],
         "Due_Date": Data["Due_Date"],
         "Invoice_Billed_By": Data["bil_by_id"],
         "Invoice_Billed_To": Data["bil_to_id"],
-        "Invoice_tax": Data["Choose_Taxation"],
-        "Invoice_currency": Data["Currency"],
+        # "Invoice_tax": Data["Choose_Taxation"],
+        # "Invoice_currency": Data["Currency"],
         "Invoiceitems": Data["items"],
-        "Invoice_amount": Data["Total_sum"],
-        "Invoice_status": Data["status"],
+        "Invoice_subtot": Data["Sub_Total_sum"],
+        "Invoice_ship": Data["Shipping_sum"],
+        "Invoice_disc": Data["Discount_sum"],
+        "Invoice_Total": Data["Total_sum"],
+        # "Invoice_amount": Data["Total_sum"],
+        # "Invoice_status": Data["status"],
     }
     return Invoice_list
 
 def inv_up_func(Data):
     Invoice_list={
-        "invoice_title": Data["Invoice_name"],
-        "invoice_subtitle": Data["Invoice_Sub_Title"],
+        "invoice_title": Data["invoice_title"],
+        "invoice_subtitle": Data["invoice_subtitle"],
         "Invoice_Date": Data["Invoice_Date"],
         "Due_Date": Data["Due_Date"],
-        "Invoice_tax": Data["Choose_Taxation"],
-        "Invoice_currency": Data["Currency"],
-        "Invoice_amount": Data["Total_sum"],
-        "Invoice_status": Data["status"],
+        # "Invoice_tax": Data["Choose_Taxation"],
+        # "Invoice_currency": Data["Currency"],
+        # "Invoice_amount": Data["Total_sum"],
+        # "Invoice_status": Data["status"],
+        # "Invoiceitems": Data["items"],
+        "Invoice_subtot": Data["Sub_Total_sum"],
+        "Invoice_ship": Data["Shipping_sum"],
+        "Invoice_disc": Data["Discount_sum"],
+        "Invoice_Total": Data["Total_sum"],
     }
     return Invoice_list
 
@@ -41,25 +58,33 @@ def inv_up_func(Data):
 def Billed_By_func(Data):
     billed_by_list={
         "Business_Name":Data["Billed_By"]["Business_Name"],
+        "Street":Data["Billed_By"]["Street"],
+        "City":Data["Billed_By"]["City"],
+        "Country":Data["Billed_By"]["Country"],
+        "Pincode":Data["Billed_By"]["Pincode"],
         "Address": Data["Billed_By"]["Address"],
         "Email": Data["Billed_By"]["Email"],
         "Phone": Data["Billed_By"]["Phone"],
-        "Business_GSTIN": Data["Billed_By"]["Business_GSTIN"],
-        "Business_PAN_Number": Data["Billed_By"]["Business_PAN_Number"],
-        "VAT_Registration_Number": Data["Billed_By"]["VAT_Registration_Number"],
+        # "Business_GSTIN": Data["Billed_By"]["Business_GSTIN"],
+        # "Business_PAN_Number": Data["Billed_By"]["Business_PAN_Number"],
+        # "VAT_Registration_Number": Data["Billed_By"]["VAT_Registration_Number"],
         "user_id":Data["user_id"]
     }
     return (billed_by_list)
 def Billed_To_func(Data):
     billed_to_list={
         "Business_Name":Data["Billed_To"]["Business_Name"],
+        "Street":Data["Billed_To"]["Street"],
+        "City":Data["Billed_To"]["City"],
+        "Country":Data["Billed_To"]["Country"],
+        "Pincode":Data["Billed_To"]["Pincode"],
         "Address": Data["Billed_To"]["Address"],
         "Email": Data["Billed_To"]["Email"],
         "Phone": Data["Billed_To"]["Phone"],
-        "Business_GSTIN": Data["Billed_To"]["Business_GSTIN"],
-        "Business_PAN_Number": Data["Billed_To"]["Business_PAN_Number"],
-        "VAT_Registration_Number": Data["Billed_To"]["VAT_Registration_Number"],
-        "Unique_Key":Data["Billed_To"]["Unique_Key"],
+        # "Business_GSTIN": Data["Billed_To"]["Business_GSTIN"],
+        # "Business_PAN_Number": Data["Billed_To"]["Business_PAN_Number"],
+        # "VAT_Registration_Number": Data["Billed_To"]["VAT_Registration_Number"],
+        # "Unique_Key":Data["Billed_To"]["Unique_Key"],
         "user_id":Data["user_id"]
     }
     return (billed_to_list)
@@ -74,7 +99,7 @@ def item_func(Data):
             "item_GST_Rate":j['GST Rate'],
             "Quantity":j['Quantity'],
             "Rate":j['Rate'],
-            "Amount":j['Amount'],
+            # "Amount":j['Amount'],
             "CGST":j['CGST'],
             "SGST":j['SGST'],
             "Total":j['Total']
@@ -88,7 +113,7 @@ def item_up_func(Data):
         "item_GST_Rate":Data['GST Rate'],
         "Quantity":Data['Quantity'],
         "Rate":Data['Rate'],
-        "Amount":Data['Amount'],
+        # "Amount":Data['Amount'],
         "CGST":Data['CGST'],
         "SGST":Data['SGST'],
         "Total":Data['Total']
